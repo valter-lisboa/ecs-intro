@@ -1,0 +1,14 @@
+version: "3.7"
+services:
+  app-a:
+    container_name: app-a
+    build: 
+        context: ./app-a
+    ports:
+        - 8080:8080
+  app-b:
+    container_name: app-b
+    build: 
+        context: ./app-b
+    ports:
+        - 8081:8081
