@@ -8,12 +8,7 @@ terraform {
     }
 
     random = {
-      source  = "hashicorp/random"
-      version = "~> 2"
+      source = "hashicorp/random"
     }
   }
 }
-
-provider "aws" {}
-
-provider "random" {}
