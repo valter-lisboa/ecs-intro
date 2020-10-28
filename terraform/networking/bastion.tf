@@ -20,8 +20,15 @@ module "bastion_firewall" {
   name                = "ec2-${local.bastion}"
   description         = "Security group for bastion"
   vpc_id              = module.vpc.vpc_id
-  ingress_rules       = []
   ingress_cidr_blocks = [local.vpc_cidr]
+  ingress_rules       = []
+  ingress_with_cidr_blocks = [{
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    description = "SSH"
+    cidr_blocks = "0.0.0.0/0"
+  }]
 }
 
 module "bastion_role" {
@@ -33,19 +40,17 @@ module "bastion_role" {
   create_instance_profile = true
   custom_role_policy_arns = ["arn:aws:iam::aws:policy/AdministratorAccess"]
   tags                    = local.common_tags
-
-  trusted_role_services = [
-    "ec2.amazonaws.com",
-    "ssm.amazonaws.com",
-  ]
+  role_requires_mfa       = false
+  trusted_role_services   = ["ec2.amazonaws.com"]
 }
 
 resource "aws_instance" "bastion" {
-  ami                    = data.aws_ami.this.id
-  instance_type          = "t3.nano"
-  subnet_id              = module.vpc.private_subnets[0]
-  vpc_security_group_ids = [module.bastion_firewall.this_security_group_id]
-  iam_instance_profile   = module.bastion_role.this_iam_instance_profile_name
+  ami                         = data.aws_ami.this.id
+  instance_type               = "t3.nano"
+  subnet_id                   = module.vpc.private_subnets[0]
+  vpc_security_group_ids      = [module.bastion_firewall.this_security_group_id]
+  iam_instance_profile        = module.bastion_role.this_iam_instance_profile_name
+  associate_public_ip_address = false
 
   tags = merge(
     local.common_tags,
