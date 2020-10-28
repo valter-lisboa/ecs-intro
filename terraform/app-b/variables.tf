@@ -1,5 +1,8 @@
 variable "cluster_name" {
-  default = "tdc-dev"
+  default = "tdc-recife-2020-fargate-demo"
+}
+variable "lb_name" {
+  default = "tdc-recife-2020-fargate-demo"
 }
 variable "app_name" {
   default = "nginx"
