@@ -39,11 +39,11 @@ resource "aws_security_group" "ecs_service" {
   vpc_id      = data.aws_subnet.public_a.vpc_id
 
   ingress {
-    description     = "HTTP"
-    from_port       = 80
-    to_port         = 80
-    protocol        = "tcp"
-    security_groups = [aws_security_group.alb.arn]
+    description = "HTTP"
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"] # HACK
   }
   egress {
     from_port   = 0
@@ -60,7 +60,7 @@ resource "aws_security_group" "ecs_service" {
 # Service
 resource "aws_ecs_service" "this" {
   name          = var.app_name
-  cluster       = aws_ecs_cluster.this.id
+  cluster       = var.cluster_name
   launch_type   = "FARGATE"
   desired_count = 1
 
@@ -117,14 +117,15 @@ resource "aws_ecs_task_definition" "this" {
         "volumesFrom" = [],
         "essential"   = true,
 
-        "logConfiguration" = {
-          logDriver = "awslogs"
-          "options" = {
-            "awslogs-group"         = "ecs/${var.app_name}"
-            "awslogs-region"        = data.aws_region.current.name
-            "awslogs-stream-prefix" = "helloworld"
-          }
-        }
+        # WIP disabled
+        # "logConfiguration" = {
+        #   logDriver = "awslogs"
+        #   "options" = {
+        #     "awslogs-group"         = "ecs/${var.app_name}"
+        #     "awslogs-region"        = data.aws_region.current.name
+        #     "awslogs-stream-prefix" = "helloworld"
+        #   }
+        # }
       }
     ]
   )
@@ -150,7 +151,6 @@ resource "aws_cloudwatch_log_group" "main" {
 #
 # IAM - instance (optional)
 #
-
 data "aws_iam_policy_document" "instance_role_policy_doc" {
   statement {
     actions = [
@@ -159,7 +159,7 @@ data "aws_iam_policy_document" "instance_role_policy_doc" {
       "ecs:Submit*",
     ]
 
-    resources = [aws_ecs_cluster.this.arn]
+    resources = [data.aws_ecs_cluster.current.arn]
   }
 
   statement {
@@ -172,7 +172,7 @@ data "aws_iam_policy_document" "instance_role_policy_doc" {
     condition {
       test     = "StringEquals"
       variable = "ecs:cluster"
-      values   = [aws_ecs_cluster.this.arn]
+      values   = [data.aws_ecs_cluster.current.arn]
     }
   }
 
@@ -217,7 +217,6 @@ data "aws_iam_policy_document" "instance_role_policy_doc" {
 #
 # IAM - task
 #
-
 data "aws_iam_policy_document" "ecs_assume_role_policy" {
   statement {
     actions = ["sts:AssumeRole"]

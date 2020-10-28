@@ -6,8 +6,8 @@ resource "aws_security_group" "alb" {
 
   ingress {
     description = "HTTP"
-    from_port   = 80
-    to_port     = 80
+    from_port   = 8080
+    to_port     = 8080
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
@@ -29,31 +29,9 @@ resource "aws_security_group" "alb" {
     "Name" = "${var.app_name}-alb-sg"
   }
 }
-resource "aws_lb" "this" {
-  name               = "${var.app_name}-alb"
-  internal           = false
-  load_balancer_type = "application"
-  security_groups    = [aws_security_group.alb.id]
-  subnets = [
-    data.aws_subnet.public_a.id,
-    data.aws_subnet.public_b.id
-  ]
-
-  # enable_deletion_protection = true
-
-  # access_logs {
-  #   bucket  = aws_s3_bucket.lb_logs.bucket
-  #   prefix  = "test-lb"
-  #   enabled = true
-  # }
-
-  # tags = {
-  #   Environment = "production"
-  # }
-}
 resource "aws_lb_listener" "http" {
-  load_balancer_arn = aws_lb.this.arn
-  port              = "80"
+  load_balancer_arn = data.aws_lb.current.arn
+  port              = "8080"
   protocol          = "HTTP"
 
   default_action {
@@ -65,8 +43,4 @@ resource "aws_lb_listener" "http" {
       status_code  = "404"
     }
   }
-
-  depends_on = [
-    aws_lb.this
-  ]
 }
