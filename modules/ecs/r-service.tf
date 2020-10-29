@@ -28,7 +28,7 @@ resource "aws_lb_listener_rule" "all" {
 
   condition {
     path_pattern {
-      values = ["/*"]
+      values = ["/api/*"]
     }
   }
 }
@@ -80,8 +80,8 @@ resource "aws_ecs_task_definition" "this" {
             "containerPort" = 8080
           }
         ],
-        "cpu"         = 10,
-        "memory"      = 128,
+        "cpu"         = 256,
+        "memory"      = 512,
         "environment" = [],
         "mountPoints" = [],
         "volumesFrom" = [],
