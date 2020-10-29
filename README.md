@@ -45,3 +45,4 @@ Cada diretório deste repo tem sua função:
 - terraform/app-*: constroi os ECS Service e ECS Task Definition e outros elementos associados a eles. 
 - modules/codepipeline: módulo terraform compartilhado pelas pipelines.
 - modules/ecs: módulo terraform compartilhando pelas aplicações.
+
