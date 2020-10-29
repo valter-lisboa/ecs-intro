@@ -17,8 +17,8 @@ resource "aws_vpc_dhcp_options" "this" {
   domain_name_servers = ["AmazonProvidedDNS"]
 
   tags = merge(
-      local.common_tags,
-      { Name = local.name }
+    local.common_tags,
+    { Name = local.name }
   )
 }
 

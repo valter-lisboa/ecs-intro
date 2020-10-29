@@ -1,5 +1,5 @@
 resource "aws_iam_role" "codepipeline" {
-  name = "codepipeline"
+  name = "codepipeline-${var.project_name}"
 
   assume_role_policy = <<EOF
 {
@@ -204,7 +204,7 @@ POLICY
 
 
 resource "aws_iam_role" "codebuild" {
-  name = "codebuild"
+  name = "codebuild-${var.project_name}"
 
   assume_role_policy = <<EOF
 {

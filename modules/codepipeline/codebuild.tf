@@ -1,5 +1,5 @@
 data "template_file" "buildspec" {
-  template = file("buildspec.yml")
+  template = file("${path.module}/buildspec.yml")
   vars = {
     env = var.env
   }

@@ -1,16 +1,13 @@
 variable "project_name" {
   description = "Project's name"
-  default     = "exodus-hello"
 }
 
 variable "env" {
-  description = "Depolyment environment"
-  default     = "dev"
+  description = "Deployment environment"
 }
 
 variable "codecommit_repository_name" {
   description = "CodeCommit repository name"
-  default     = "docker-hello"
 }
 
 variable "codecommit_repository_branch" {

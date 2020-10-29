@@ -1,28 +1,29 @@
 # Target group / Listener rule
 resource "aws_lb_target_group" "this" {
-  name        = "${var.app_name}-lb-tg"
-  port        = 80
-  protocol    = "HTTP"
-  vpc_id      = data.aws_subnet.public_a.vpc_id
-  target_type = "ip"
+  count = var.lb_listener_arn != null ? 1 : 0
+
+  name                 = "${var.app_name}-lb-tg"
+  port                 = 8080
+  protocol             = "HTTP"
+  vpc_id               = data.aws_subnet.private_a.vpc_id
+  target_type          = "ip"
+  deregistration_delay = 10
 
   health_check {
     enabled = true
-    path    = "/"
+    path    = "/healthcheck"
     matcher = "200-299"
   }
-
-  depends_on = [
-    aws_lb_listener.http
-  ]
 }
 resource "aws_lb_listener_rule" "all" {
-  listener_arn = aws_lb_listener.http.arn
+  count = var.lb_listener_arn != null ? 1 : 0
+
+  listener_arn = var.lb_listener_arn
   priority     = 100
 
   action {
     type             = "forward"
-    target_group_arn = aws_lb_target_group.this.arn
+    target_group_arn = aws_lb_target_group.this[0].arn
   }
 
   condition {
@@ -36,12 +37,12 @@ resource "aws_lb_listener_rule" "all" {
 resource "aws_security_group" "ecs_service" {
   name        = "${var.app_name}-ecs-service-sg"
   description = "Allow traffic from ${var.app_name} ALB"
-  vpc_id      = data.aws_subnet.public_a.vpc_id
+  vpc_id      = data.aws_subnet.private_a.vpc_id
 
   ingress {
     description = "HTTP"
-    from_port   = 80
-    to_port     = 80
+    from_port   = 8080
+    to_port     = 8080
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"] # HACK
   }
@@ -75,10 +76,14 @@ resource "aws_ecs_service" "this" {
     security_groups = [aws_security_group.ecs_service.id]
   }
 
-  load_balancer {
-    target_group_arn = aws_lb_target_group.this.arn
-    container_name   = var.app_name
-    container_port   = 80
+  dynamic "load_balancer" {
+    for_each = var.lb_listener_arn != null ? [aws_lb_target_group.this[0].arn] : []
+
+    content {
+      target_group_arn = load_balancer.value
+      container_name   = var.app_name
+      container_port   = 8080
+    }
   }
 
   depends_on = [
@@ -105,9 +110,9 @@ resource "aws_ecs_task_definition" "this" {
         "image" = var.app_image,
         "portMappings" = [
           {
-            "hostPort"      = 80,
+            "hostPort"      = 8080,
             "protocol"      = "tcp",
-            "containerPort" = 80
+            "containerPort" = 8080
           }
         ],
         "cpu"         = 10,

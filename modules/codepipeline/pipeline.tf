@@ -59,5 +59,5 @@ resource "aws_codepipeline" "current" {
       version   = "1"
     }
   }
-  
+
 }
