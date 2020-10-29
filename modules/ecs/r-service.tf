@@ -58,52 +58,11 @@ resource "aws_security_group" "ecs_service" {
   }
 }
 
-# Service
-resource "aws_ecs_service" "this" {
-  name          = var.app_name
-  cluster       = var.cluster_name
-  launch_type   = "FARGATE"
-  desired_count = 1
-
-  task_definition = aws_ecs_task_definition.this.arn
-  # iam_role        = aws_iam_role.foo.arn
-
-  network_configuration {
-    subnets = [
-      data.aws_subnet.private_a.id,
-      data.aws_subnet.private_b.id
-    ]
-    security_groups = [aws_security_group.ecs_service.id]
-  }
-
-  dynamic "load_balancer" {
-    for_each = var.lb_listener_arn != null ? [aws_lb_target_group.this[0].arn] : []
-
-    content {
-      target_group_arn = load_balancer.value
-      container_name   = var.app_name
-      container_port   = 8080
-    }
-  }
-
-  service_registries {
-    registry_arn   = aws_service_discovery_service.this.arn
-    container_port = 0
-    port           = 0
-  }
-
-  depends_on = [
-    aws_lb_target_group.this
-  ]
-}
-
 # Task Definition
 resource "aws_ecs_task_definition" "this" {
-  family = var.app_name
-
-  task_role_arn      = aws_iam_role.task_role.arn
-  execution_role_arn = aws_iam_role.task_execution_role.arn
-
+  family                   = var.app_name
+  task_role_arn            = aws_iam_role.task_role.arn
+  execution_role_arn       = aws_iam_role.task_execution_role.arn
   memory                   = 512
   cpu                      = 256
   requires_compatibilities = ["FARGATE"]
@@ -146,6 +105,43 @@ resource "aws_ecs_task_definition" "this" {
   # }
 }
 
+# Service
+resource "aws_ecs_service" "this" {
+  name            = var.app_name
+  cluster         = var.cluster_name
+  launch_type     = "FARGATE"
+  desired_count   = 2
+  task_definition = aws_ecs_task_definition.this.arn
+
+  network_configuration {
+    subnets = [
+      data.aws_subnet.private_a.id,
+      data.aws_subnet.private_b.id
+    ]
+    security_groups = [aws_security_group.ecs_service.id]
+  }
+
+  dynamic "load_balancer" {
+    for_each = var.lb_listener_arn != null ? [aws_lb_target_group.this[0].arn] : []
+
+    content {
+      target_group_arn = load_balancer.value
+      container_name   = var.app_name
+      container_port   = 8080
+    }
+  }
+
+  service_registries {
+    registry_arn   = aws_service_discovery_service.this.arn
+    container_port = 0
+    port           = 0
+  }
+
+  depends_on = [
+    aws_lb_target_group.this
+  ]
+}
+
 resource "aws_cloudwatch_log_group" "main" {
   name              = "/ecs/${var.app_name}"
   retention_in_days = 90
@@ -158,72 +154,6 @@ resource "aws_cloudwatch_log_group" "main" {
     "Automation"  = "Terraform"
   }
 }
-
-# #
-# # IAM - instance (optional)
-# #
-# data "aws_iam_policy_document" "instance_role_policy_doc" {
-#   statement {
-#     actions = [
-#       "ecs:DeregisterContainerInstance",
-#       "ecs:RegisterContainerInstance",
-#       "ecs:Submit*",
-#     ]
-
-#     resources = [data.aws_ecs_cluster.current.arn]
-#   }
-
-#   statement {
-#     actions = [
-#       "ecs:UpdateContainerInstancesState",
-#     ]
-
-#     resources = ["*"]
-
-#     condition {
-#       test     = "StringEquals"
-#       variable = "ecs:cluster"
-#       values   = [data.aws_ecs_cluster.current.arn]
-#     }
-#   }
-
-#   statement {
-#     actions = [
-#       "ecs:DiscoverPollEndpoint",
-#       "ecs:Poll",
-#       "ecs:StartTelemetrySession",
-#     ]
-
-#     resources = ["*"]
-#   }
-
-#   statement {
-#     actions = [
-#       "logs:CreateLogStream",
-#       "logs:PutLogEvents",
-#     ]
-
-#     resources = [aws_cloudwatch_log_group.main.arn]
-#   }
-
-#   statement {
-#     actions = [
-#       "ecr:GetAuthorizationToken",
-#     ]
-
-#     resources = ["*"]
-#   }
-
-#   statement {
-#     actions = [
-#       "ecr:BatchCheckLayerAvailability",
-#       "ecr:GetDownloadUrlForLayer",
-#       "ecr:BatchGetImage",
-#     ]
-
-#     resources = ["*"]
-#   }
-# }
 
 #
 # IAM - task
