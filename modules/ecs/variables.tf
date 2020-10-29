@@ -11,3 +11,6 @@ variable "subnet_private_ids" {
 variable "lb_listener_arn" {
   default = null
 }
+variable "cloudmap_namespace_id" {
+
+}

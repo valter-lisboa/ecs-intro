@@ -86,6 +86,12 @@ resource "aws_ecs_service" "this" {
     }
   }
 
+  service_registries {
+    registry_arn   = aws_service_discovery_service.this.arn
+    container_port = 0
+    port           = 0
+  }
+
   depends_on = [
     aws_lb_target_group.this
   ]
@@ -123,14 +129,14 @@ resource "aws_ecs_task_definition" "this" {
         "essential"   = true,
 
         # WIP disabled
-        # "logConfiguration" = {
-        #   logDriver = "awslogs"
-        #   "options" = {
-        #     "awslogs-group"         = "ecs/${var.app_name}"
-        #     "awslogs-region"        = data.aws_region.current.name
-        #     "awslogs-stream-prefix" = "helloworld"
-        #   }
-        # }
+        "logConfiguration" = {
+          logDriver = "awslogs"
+          "options" = {
+            "awslogs-group"         = "/ecs/${var.app_name}"
+            "awslogs-region"        = data.aws_region.current.name
+            "awslogs-stream-prefix" = "helloworld"
+          }
+        }
       }
     ]
   )
@@ -141,7 +147,7 @@ resource "aws_ecs_task_definition" "this" {
 }
 
 resource "aws_cloudwatch_log_group" "main" {
-  name              = "ecs/${var.app_name}"
+  name              = "/ecs/${var.app_name}"
   retention_in_days = 90
 
   # kms_key_id = var.kms_key_id
@@ -153,71 +159,71 @@ resource "aws_cloudwatch_log_group" "main" {
   }
 }
 
-#
-# IAM - instance (optional)
-#
-data "aws_iam_policy_document" "instance_role_policy_doc" {
-  statement {
-    actions = [
-      "ecs:DeregisterContainerInstance",
-      "ecs:RegisterContainerInstance",
-      "ecs:Submit*",
-    ]
+# #
+# # IAM - instance (optional)
+# #
+# data "aws_iam_policy_document" "instance_role_policy_doc" {
+#   statement {
+#     actions = [
+#       "ecs:DeregisterContainerInstance",
+#       "ecs:RegisterContainerInstance",
+#       "ecs:Submit*",
+#     ]
 
-    resources = [data.aws_ecs_cluster.current.arn]
-  }
+#     resources = [data.aws_ecs_cluster.current.arn]
+#   }
 
-  statement {
-    actions = [
-      "ecs:UpdateContainerInstancesState",
-    ]
+#   statement {
+#     actions = [
+#       "ecs:UpdateContainerInstancesState",
+#     ]
 
-    resources = ["*"]
+#     resources = ["*"]
 
-    condition {
-      test     = "StringEquals"
-      variable = "ecs:cluster"
-      values   = [data.aws_ecs_cluster.current.arn]
-    }
-  }
+#     condition {
+#       test     = "StringEquals"
+#       variable = "ecs:cluster"
+#       values   = [data.aws_ecs_cluster.current.arn]
+#     }
+#   }
 
-  statement {
-    actions = [
-      "ecs:DiscoverPollEndpoint",
-      "ecs:Poll",
-      "ecs:StartTelemetrySession",
-    ]
+#   statement {
+#     actions = [
+#       "ecs:DiscoverPollEndpoint",
+#       "ecs:Poll",
+#       "ecs:StartTelemetrySession",
+#     ]
 
-    resources = ["*"]
-  }
+#     resources = ["*"]
+#   }
 
-  statement {
-    actions = [
-      "logs:CreateLogStream",
-      "logs:PutLogEvents",
-    ]
+#   statement {
+#     actions = [
+#       "logs:CreateLogStream",
+#       "logs:PutLogEvents",
+#     ]
 
-    resources = [aws_cloudwatch_log_group.main.arn]
-  }
+#     resources = [aws_cloudwatch_log_group.main.arn]
+#   }
 
-  statement {
-    actions = [
-      "ecr:GetAuthorizationToken",
-    ]
+#   statement {
+#     actions = [
+#       "ecr:GetAuthorizationToken",
+#     ]
 
-    resources = ["*"]
-  }
+#     resources = ["*"]
+#   }
 
-  statement {
-    actions = [
-      "ecr:BatchCheckLayerAvailability",
-      "ecr:GetDownloadUrlForLayer",
-      "ecr:BatchGetImage",
-    ]
+#   statement {
+#     actions = [
+#       "ecr:BatchCheckLayerAvailability",
+#       "ecr:GetDownloadUrlForLayer",
+#       "ecr:BatchGetImage",
+#     ]
 
-    resources = ["*"]
-  }
-}
+#     resources = ["*"]
+#   }
+# }
 
 #
 # IAM - task
@@ -240,7 +246,7 @@ data "aws_iam_policy_document" "task_execution_role_policy_doc" {
       "logs:PutLogEvents",
     ]
 
-    resources = [aws_cloudwatch_log_group.main.arn]
+    resources = ["${aws_cloudwatch_log_group.main.arn}:*"]
   }
 
   statement {
@@ -276,4 +282,23 @@ resource "aws_iam_role_policy" "task_execution_role_policy" {
   name   = "${aws_iam_role.task_execution_role.name}-policy"
   role   = aws_iam_role.task_execution_role.name
   policy = data.aws_iam_policy_document.task_execution_role_policy_doc.json
+}
+
+resource "aws_service_discovery_service" "this" {
+  name = var.app_name
+
+  dns_config {
+    namespace_id = var.cloudmap_namespace_id
+
+    dns_records {
+      ttl  = 10
+      type = "A"
+    }
+
+    routing_policy = "MULTIVALUE"
+  }
+
+  health_check_custom_config {
+    failure_threshold = 1
+  }
 }
