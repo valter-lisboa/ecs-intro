@@ -20,6 +20,7 @@ Para construir o ambiente siga estes passos:
 
 - No console da AWS acesse o CodeCommit e crie dois repositórios app e app-b.
 - Copie o conteúdo dos diretórios `docker/app-a` e `docker/app-b` deste repositório para dentro de cada repositório respectivamente criado no passo anterior. É possível fazer isso via upload do próprio console ou configurando os repositórios git em sua máquina e fazendo commit/push, conforme preferir.
+- Altere o arquivo ngix.conf do app-a mudando o server no upstream app-b de `server app-b:8080` para `server app-b.discovery.ecs-fargate-intro.cloud:8080`
 - Entre nos diretórios abaixo e para cada um execute os comandos `terraform init && terraform apply -auto-approve`:
   - terraform/codepipeline-a
   - terraform/codepipeline-b
