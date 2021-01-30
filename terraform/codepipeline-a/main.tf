@@ -19,5 +19,5 @@ module "codebuild" {
   project_name                 = "app-a"
   env                          = "dev"
   codecommit_repository_name   = "app-a"
-  codecommit_repository_branch = "master"
+  codecommit_repository_branch = "main"
 }
