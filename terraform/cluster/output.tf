@@ -3,11 +3,11 @@ output "ecs_cluster" {
 }
 
 output "alb_id" {
-  value = module.alb.this_lb_id
+  value = module.alb.lb_id
 }
 
 output "alb_arn" {
-  value = module.alb.this_lb_arn
+  value = module.alb.lb_arn
 }
 
 output "listener_id" {

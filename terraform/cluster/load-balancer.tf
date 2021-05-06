@@ -21,7 +21,7 @@ module "alb" {
   tags                             = local.common_tags
   enable_cross_zone_load_balancing = true
   internal                         = false
-  security_groups                  = [module.lb_firewall.this_security_group_id]
+  security_groups                  = [module.lb_firewall.security_group_id]
 
   http_tcp_listeners = [{
     port        = 80
