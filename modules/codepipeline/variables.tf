@@ -14,3 +14,12 @@ variable "codecommit_repository_branch" {
   description = "Repository branch to connect to"
   default     = "master"
 }
+
+variable "docker_login_username" {
+  type = string
+}
+
+variable "docker_login_password" {
+  type      = string
+  sensitive = true
+}

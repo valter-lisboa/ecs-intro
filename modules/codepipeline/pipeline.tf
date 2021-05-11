@@ -1,4 +1,6 @@
 resource "aws_codepipeline" "current" {
+  depends_on = [aws_codebuild_project.static_web_build]
+
   name     = var.project_name
   role_arn = aws_iam_role.codepipeline.arn
 

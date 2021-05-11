@@ -286,6 +286,14 @@ resource "aws_iam_role_policy" "codebuild" {
             "codebuild:BatchPutCodeCoverages"
         ],
         "Resource": "*"
+    },
+    {
+        "Effect": "Allow",
+        "Action": [
+            "secretsmanager:GetSecretValue"
+        ],
+        "Resource": "*"
+
     }
   ]
 }

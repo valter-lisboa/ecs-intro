@@ -20,4 +20,6 @@ module "codebuild" {
   env                          = "dev"
   codecommit_repository_name   = "app-b"
   codecommit_repository_branch = "main"
+  docker_login_username        = var.docker_login_username
+  docker_login_password        = var.docker_login_password
 }
