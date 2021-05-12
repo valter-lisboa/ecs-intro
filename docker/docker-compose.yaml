@@ -4,6 +4,7 @@ services:
     container_name: app-a
     build: 
         context: ./app-a
+        dockerfile: Dockerfile-local
     ports:
         - 8080:8080
   app-b:
